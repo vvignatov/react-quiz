@@ -38,7 +38,6 @@ class Auth extends Component {
 		}
 	}
 	loginHandler = () => {
-		console.log('login')
 		this.props.auth(
 			this.state.formControls.email.value,
 			this.state.formControls.password.value,
@@ -46,7 +45,6 @@ class Auth extends Component {
 		)
 	}
 	registerHandler = () => {
-		console.log('register')
 		this.props.auth(
 			this.state.formControls.email.value,
 			this.state.formControls.password.value,
@@ -55,7 +53,6 @@ class Auth extends Component {
 	}
 	submitHandler = (event) => {
 		event.preventDefault();
-		console.log('submit')
 	}
 	validateControl(value, validation) {
 		if (!validation) {

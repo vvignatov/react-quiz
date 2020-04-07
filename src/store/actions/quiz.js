@@ -1,5 +1,14 @@
 import axios from '../../axios/axios-quiz';
-import { FETCH_QUIZ_START, FETCH_QUIZ_SUCCESS, FETCH_QUIZ_ERROR } from './actionTypes';
+import { 
+	FETCH_QUIZES_START,
+	FETCH_QUIZES_SUCCESS,
+	FETCH_QUIZES_ERROR,
+	FETCH_QUIZ_SUCCESS,
+	QUIZ_SET_STATE,
+	FINISH_QUIZ,
+	QUIZ_NEXT_QUESTION,
+	QUIZ_RETRY
+} from './actionTypes';
 
 export function fetchQuizes() {
 	return async(dispatch) => {
@@ -15,9 +24,6 @@ export function fetchQuizes() {
 				})
 			});
 
-			// this.setState({
-			// 	quizes, loading: false
-			// })
 			dispatch(fetchQuizesSuccess(quizes))
 		} catch (error) {
 			dispatch(fetchQuizesError(error))
@@ -25,22 +31,111 @@ export function fetchQuizes() {
 	}
 }
 
+export function fetchQuizById(quizId) {
+	return async dispatch => {
+		dispatch(fetchQuizesStart());
+		try {
+			const response = await axios.get(`/quizes/${quizId}.json`)
+			const quiz = response.data;
+
+			dispatch(fetchQuizSuccess(quiz))
+		} catch (error) {
+			dispatch(fetchQuizesError());
+		}
+		dispatch(fetchQuizesSuccess());
+	}
+}
+
+export function fetchQuizSuccess(quiz) {
+	return {
+		type: FETCH_QUIZ_SUCCESS,
+		quiz
+	}
+}
+
 export function fetchQuizesStart() {
 	return {
-		type: FETCH_QUIZ_START
+		type: FETCH_QUIZES_START
 	}
 }
 
 export function fetchQuizesSuccess(quizes) {
 	return {
-		type: FETCH_QUIZ_SUCCESS,
+		type: FETCH_QUIZES_SUCCESS,
 		quizes
 	}
 }
 
 export function fetchQuizesError(error) {
 	return {
-		type: FETCH_QUIZ_ERROR,
+		type: FETCH_QUIZES_ERROR,
 		error
 	}
+}
+
+export function quizSetState(answerState, results) {
+	return {
+		type: QUIZ_SET_STATE,
+		answerState,
+		results
+	}
+}
+
+export function finishQuiz() {
+	return {
+		type: FINISH_QUIZ
+	}
+}
+
+export function quizNextQuestion(nextQuestion) {
+	return {
+		type: QUIZ_NEXT_QUESTION,
+		nextQuestion
+	}
+}
+
+export function retryQuiz() {
+	return {
+		type: QUIZ_RETRY
+	}
+}
+
+export function quizAnswerClick(answerId) {
+	return (dispatch, getState) => {
+		const state = getState().quiz;
+
+		if (state.answerState) {
+			const key = Object.keys(state.answerState)[0];
+			if (state.answerState[key] === 'success') {
+				return;
+			}
+		}
+		const question = state.quiz[state.activeQuestion];
+		const results = state.results;
+		const activeQuestion = state.activeQuestion;
+
+		if (question.rightAnswerId == answerId) {
+			if (!results[activeQuestion]) {
+				results[activeQuestion] = 'success'
+			}
+
+			dispatch(quizSetState({[answerId]: 'success'}, results));
+
+			const timeout = window.setTimeout(() => {
+				if (isQuizFinished(state)) {
+					dispatch(finishQuiz());
+				} else {
+					dispatch(quizNextQuestion(state.activeQuestion + 1))
+				}
+				window.clearTimeout(timeout);
+			}, 1000)
+		} else {
+			results[activeQuestion] = 'error';
+			dispatch(quizSetState({[answerId]: 'error'}, results));
+		}
+	}
+}
+
+function isQuizFinished(state) {
+	return state.activeQuestion + 1 === state.quiz.length;
 }

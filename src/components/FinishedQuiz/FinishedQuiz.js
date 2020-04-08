@@ -4,6 +4,16 @@ import Button from '../Ui/Button/Button';
 import {Link} from 'react-router-dom';
 
 const FinishedQuiz = (props) => {
+	function calcRightResults(object) {
+		let counter = 0;
+
+		for (let key in object) {
+			if (object[key] === 'success'){
+				counter += 1;
+			}
+		}
+		return counter;
+	}
 	return (
 		<div className={'finished-quiz'}>
 			<ul>
@@ -26,7 +36,7 @@ const FinishedQuiz = (props) => {
 				}) }
 			</ul>
 
-			<p>Правильно 4 из 10</p>
+			<p>Правильно {calcRightResults(props.results)} из {props.quiz.length}</p>
 			<div>
 				<Button onClick={props.onRetry} type={'primary'}>Повторить</Button>
 				<Link to="/">
